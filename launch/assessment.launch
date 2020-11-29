@@ -1,0 +1,23 @@
+<launch> 
+  <arg name="battery" default="0" />
+  <arg name="draw_vacuum" default="0" />
+  <param name="use_sim_time" type="bool" value="True"/>
+  <rosparam command="load" file="$(find assessment)/world/config.yaml"/>
+  <node name="stage" pkg="stage_ros" type="stageros" args="$(find assessment)/world/world.world"/>
+  <node name="mapserver" pkg="map_server" type="map_server" args="$(find assessment)/world/map.yaml"/>
+  <node name="map2odom" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 /map /odom 100"/>
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find assessment)/config.rviz"/>
+  <group>
+    <remap from="/cmd_vel" to="/cmd_vel_in" if="$(arg battery)"/> 
+    <!-- PUT YOUR NODE HERE -->
+    <node name="pose_marker" pkg="assessment" type="pose_marker.py" />
+    <node name="path_marker" pkg="assessment" type="path_marker.py" />
+    <!--THE TELEOP NODE BELOW ALLOWS YOU TO DRIVE AROUND WITH THE KEYBOARD FOR TESTING, UNCOMMENT AS DESIRED. -->
+    <node name="tele" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py"/>
+  </group>
+
+  <node name="power_simulator" pkg="assessment" type="power_simulator.py" if="$(arg battery)">
+    <remap from="/cmd_vel_out" to="/cmd_vel"/>
+  </node>
+  <node name="vacuum_drawer" pkg="assessment" type="vacuum_drawer.py" args="$(find assessment)/world/map.yaml" if="$(arg draw_vacuum)"/>
+</launch>
