@@ -1,16 +1,13 @@
 #!/usr/bin/env python
 
+"""
+This scripts reads the instructions parameter and creates markers for the goals in rviz
+"""
+
 import rospy
 from nav_msgs.msg import Odometry
-from visualization_msgs.msg import Marker
+from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point, Quaternion
-
-
-
-import rospy
-from visualization_msgs.msg import MarkerArray
-from visualization_msgs.msg import Marker
-from geometry_msgs.msg import Point
 
 
 class goalMarkers:

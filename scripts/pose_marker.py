@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+"""
+This script creates the markers in rviz for the robots true and believed pose
+"""
 import rospy
 from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker

@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+This script creates the believed and true path traveled in rviz
+"""
+
 import rospy
 from nav_msgs.msg import Path
 from nav_msgs.msg import Odometry
@@ -34,7 +38,6 @@ if __name__ == "__main__":
 	while not rospy.is_shutdown():
 		# True Path
 		try:
-			print("hi")
 			truth_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, draw_true_path)
 			truth_pub = rospy.Publisher("/path_truth", Path, queue_size=10)
 		except Exception as e:

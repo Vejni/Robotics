@@ -1,3 +1,9 @@
 - markers
 - rviz launch
-- reac config
+- read config
+
+TODO:
+- identity quaternion
+- get robot diameter param
+- path planning
+

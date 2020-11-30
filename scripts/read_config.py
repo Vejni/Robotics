@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+This script reads the config.yaml and sets the parameters in ros then quits
+"""
+
 import rospy
 import yaml
 
