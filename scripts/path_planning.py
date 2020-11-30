@@ -16,7 +16,7 @@ class Map:
 		rospy.init_node("path_planning")
 		self.sub = rospy.Subscriber("/map", OccupancyGrid, self.create_grid_callback)
 		self.rate = rospy.Rate(1)
-		
+		self.get_goals()
 
 	def create_grid_callback(self, map):
 		self.width = map.info.width
@@ -24,6 +24,33 @@ class Map:
 		self.origin = map.info.origin.position
 		self.resolution = map.info.resolution
 
+		y = 0
+		points = []
+
+		while y < self.height:
+			for x in range(self.width):
+				if map.data[y * self.width + x]:
+					points.append([x, y])
+			y += 1
+
+
+		# Debug
+		plt.scatter([p[0] for p in points], [p[1] for p in points], marker=".")
+		for goal in self.goals:
+			plt.scatter(goal[0], goal[1])
+		plt.show()
+
+	def get_goals(self):
+		instr = rospy.get_param("/instructions")
+		self.goals = [self.get_indices(goal) for goal in instr]
+
+	def get_indices(self, point):
+		x = int((point[0] - self.origin.x) / self.resolution)
+		y = int((point[1] - self.origin.y) / self.resolution)
+		return (x, y)
+
+	def create_voronoi_callback(self, map):
+		""" Old """
 		"""
 		# Inflated Grid
 		self.grid = [[0 for x in range(self.width)] for y in range(self.height)]
@@ -39,31 +66,6 @@ class Map:
 								self.grid[y+yi][x+xi] = 1
 				i += 1
 		"""
-		y = 0
-		points = []
-
-		while y < self.height:
-			for x in range(self.width):
-				if map.data[y * self.width + x]:
-					points.append([x, y])
-			y += 1
-
-		instr = rospy.get_param("/instructions")
-		goals = [self.get_indices(goal) for goal in instr]
-
-		# Debug
-		plt.scatter([p[0] for p in points], [p[1] for p in points], marker=".")
-		for goal in goals:
-			plt.scatter(goal[0], goal[1])
-		plt.show()
-
-	def get_indices(self, point):
-		x = int((point[0] - self.origin.x) / self.resolution)
-		y = int((point[1] - self.origin.y) / self.resolution)
-		return (x, y)
-	
-	def create_voronoi_callback(self, map):
-		
 		self.width = map.info.width
 		self.height = map.info.height
 		y = 0
