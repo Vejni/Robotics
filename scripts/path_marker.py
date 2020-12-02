@@ -4,10 +4,10 @@
 This script creates the believed and true path traveled in rviz
 """
 
-import rospy
-from nav_msgs.msg import Path
-from nav_msgs.msg import Odometry
 from geometry_msgs.msg import PoseStamped
+from nav_msgs.msg import Odometry
+from nav_msgs.msg import Path
+import rospy
 
 
 def draw_believed_path(data):
