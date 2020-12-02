@@ -5,6 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Status1
+        - /Grid1
       Splitter Ratio: 0.5
     Tree Height: 626
   - Class: rviz/Selection
@@ -48,7 +49,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 25
+      Plane Cell Count: 30
       Reference Frame: <Fixed Frame>
       Value: true
     - Alpha: 1
@@ -215,7 +216,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 26.549983978271484
+      Distance: 25.053422927856445
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -251,5 +252,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: -1
-  Y: -20
+  X: -2
+  Y: -40

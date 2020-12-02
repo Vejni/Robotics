@@ -5,17 +5,19 @@ This script reads the map
 """
 
 from geometry_msgs.msg import PoseStamped
-from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import OccupancyGrid, Odometry
 from matplotlib import pyplot as plt
 from geometry_msgs.msg import Point
 from queue import PriorityQueue
 from nav_msgs.msg import Path
+import itertools
 import rospy
 
 
 class Map:
 	def __init__(self):
-		self.sub = rospy.Subscriber("/map", OccupancyGrid, self.create_grid_callback)
+		self.map_sub = rospy.Subscriber("/map", OccupancyGrid, self.create_grid_callback)
+		self.pos_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, self.set_current_position)
 		self.path_pub = rospy.Publisher("/planned_path", Path, queue_size=10)
 		self.rate = rospy.Rate(1)
 
@@ -24,11 +26,6 @@ class Map:
 		self.height = map.info.height
 		self.origin = map.info.origin.position
 		self.resolution = map.info.resolution
-
-		instr = rospy.get_param("/instructions")
-		self.goals = [self.get_indices(goal) for goal in instr]
-		self.set_current_goal()
-		self.set_current_position()
 		
 		# Inflated Grid
 		self.grid = [[0 for x in range(self.width)] for y in range(self.height)]
@@ -44,8 +41,13 @@ class Map:
 							if not(y+yi < 0 or x+xi < 0 or y+yi >= self.height or x+xi >= self.width):
 								self.grid[y+yi][x+xi] = 1
 				i += 1
-		
-		lst = self.a_star(self.current_position, self.current_goal)
+
+		self.set_trajectory()
+		total_path = []
+		for i in range(len(self.trajectory) - 1):
+			lst, cost = self.a_star(self.trajectory[i], self.trajectory[i+1])
+			total_path += lst
+			print(cost)
 		"""
 		# Debug
 		self.grid[self.current_position[0]][self.current_position[1]] = 1
@@ -73,7 +75,7 @@ class Map:
 		plt.show()
 		"""
 
-		self.publish_path(lst)
+		self.publish_path(total_path)
 
 	def publish_path(self, path):
 		points = [self.get_coords(p[::-1]) for p in path]
@@ -86,7 +88,7 @@ class Map:
 			pose.pose.position.y = p[1]
 			pose.pose.position.z = p[2]
 			path.poses.append(pose)
-		print(path)
+
 		while not rospy.is_shutdown():
 			self.path_pub.publish(path)
 			self.rate.sleep()
@@ -102,6 +104,7 @@ class Map:
 		
 		parents = {}
 		g = {}
+		cost = {}
 		parents[current_pos] = None
 		g[current_pos] = 0
 
@@ -111,31 +114,53 @@ class Map:
 			# Found Goal
 			if current == current_goal:
 				path = []
+				total_cost = 0
 				while current != current_pos:
 					path.append([current[0], current[1]])
+					total_cost += cost[current]
 					current = parents[current]
-				return path[::-1]
+				print("Path Planning finished successfully")
+				return path[::-1], total_cost
 
 			for neighbour in self.get_neighbours(current, parents[current]):
 				temp = g[current] + 1
 				if ((neighbour not in g) or temp < g[neighbour]):
 					g[neighbour] = temp
-					f = temp + self.heuristic_value(neighbour)
+					f = temp + self.heuristic_value(neighbour, current_goal)
+					cost[neighbour] = f
 					parents[neighbour] = current
 					open_list.put((f, neighbour))
 
-		return [current_pos]
+		print("Path Planning unsuccessful")
+		return [current_pos], 0
 
-	def heuristic_value(self, point):
-		return ((point[0] - self.current_goal[0])**2 + (point[1] - self.current_goal[1])**2)**0.5
+	def heuristic_value(self, point, current_goal):
+		return ((point[0] - current_goal[0])**2 + (point[1] - current_goal[1])**2)**0.5
 
-	def set_current_goal(self):
+	def set_trajectory(self):
 		# TODO
-		self.current_goal = self.goals[0][::-1]
+		print("Setting Trajectory")
+		instr = rospy.get_param("/instructions")
+		self.goals = [self.get_indices(goal)[::-1] for goal in instr]
 
-	def set_current_position(self):
-		# TODO 
-		point = (2, 0)
+		perm = list(itertools.permutations(self.goals))
+
+		best_path = []
+		min_cost = float("inf")
+		for index, path in enumerate(perm):
+			path = [self.current_position] + list(path)
+			cost = 0
+			for i in range(len(path)-1):
+				cost += self.heuristic_value(path[i], path[i+1])
+			if cost < min_cost:
+				min_cost = cost
+				best_path = path
+		self.trajectory = best_path
+		print("Trajectory found")
+
+	def set_current_position(self, data):
+		# TODO
+		point = (data.pose.pose.position.x, data.pose.pose.position.y)
 		self.current_position = self.get_indices(point)[::-1]
 
 	def get_indices(self, point):
@@ -188,7 +213,6 @@ class Map:
 		except IndexError:
 			pass
 
-		print(point, ":", neighbours)
 		return neighbours
 
 
