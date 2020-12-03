@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-This script reads the map
+This script reads the map, prioritises goals and sets a trajectory
 """
 
 from geometry_msgs.msg import PoseStamped
@@ -17,8 +17,6 @@ import rospy
 class Map:
 	def __init__(self):
 		self.map_sub = rospy.Subscriber("/map", OccupancyGrid, self.create_grid_callback)
-		self.pos_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, self.set_current_position)
-		self.path_pub = rospy.Publisher("/planned_path", Path, queue_size=10)
 		self.rate = rospy.Rate(1)
 
 	def create_grid_callback(self, map):
@@ -42,12 +40,7 @@ class Map:
 								self.grid[y+yi][x+xi] = 1
 				i += 1
 
-		self.set_trajectory()
-		total_path = []
-		for i in range(len(self.trajectory) - 1):
-			lst, cost = self.a_star(self.trajectory[i], self.trajectory[i+1])
-			total_path += lst
-			print(cost)
+		print("Grid created")
 		"""
 		# Debug
 		self.grid[self.current_position[0]][self.current_position[1]] = 1
@@ -75,9 +68,7 @@ class Map:
 		plt.show()
 		"""
 
-		self.publish_path(total_path)
-
-	def publish_path(self, path):
+	def create_path(self, path):
 		points = [self.get_coords(p[::-1]) for p in path]
 		path = Path()
 		path.header.frame_id = "map"
@@ -89,9 +80,7 @@ class Map:
 			pose.pose.position.z = p[2]
 			path.poses.append(pose)
 
-		while not rospy.is_shutdown():
-			self.path_pub.publish(path)
-			self.rate.sleep()
+		return path
 	
 	def a_star(self, current_pos, current_goal):
 		print("Planning trajectory from", current_pos, "to", current_goal)
@@ -156,6 +145,7 @@ class Map:
 				min_cost = cost
 				best_path = path
 		self.trajectory = best_path
+		self.current_goal = best_path[2]
 		print("Trajectory found")
 
 	def set_current_position(self, data):

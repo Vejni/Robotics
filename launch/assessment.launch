@@ -12,8 +12,9 @@
     <!-- PUT YOUR NODE HERE -->
     <node name="pose_marker" pkg="assessment" type="pose_marker.py" />
     <node name="path_marker" pkg="assessment" type="path_marker.py" />
-    <node name="read_config" pkg="assessment" type="read_config.py" />
+    <!-- <node name="read_config" pkg="assessment" type="read_config.py" /> -->
     <node name="goal_marker" pkg="assessment" type="goal_marker.py" />
+    <node name="robot" pkg="assessment" type="robot.py" />
     <!--THE TELEOP NODE BELOW ALLOWS YOU TO DRIVE AROUND WITH THE KEYBOARD FOR TESTING, UNCOMMENT AS DESIRED. -->
     <node name="tele" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py"/>
   </group>
