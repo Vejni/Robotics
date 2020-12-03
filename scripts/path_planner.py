@@ -26,7 +26,7 @@ class Map:
 		self.resolution = map.info.resolution
 		
 		# Inflated Grid
-		self.grid = [[0 for x in range(self.width)] for y in range(self.height)]
+		temp_grid = [[0 for x in range(self.width)] for y in range(self.height)]
 
 		i = 0
 		# get this param, instead of hardcode
@@ -37,9 +37,10 @@ class Map:
 					for yi in range(-inflation, inflation):
 						for xi in range(-inflation, inflation):
 							if not(y+yi < 0 or x+xi < 0 or y+yi >= self.height or x+xi >= self.width):
-								self.grid[y+yi][x+xi] = 1
+								temp_grid[y+yi][x+xi] = 1
 				i += 1
 
+		self.grid = temp_grid
 		print("Grid created")
 		"""
 		# Debug
