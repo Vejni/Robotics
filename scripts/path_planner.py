@@ -30,7 +30,7 @@ class Map:
 
 		i = 0
 		# get this param, instead of hardcode
-		inflation = 5
+		inflation = 6 # max :/
 		for y in range(self.height):
 			for x in range(self.width):
 				if (map.data[i]!= 0):
@@ -146,7 +146,7 @@ class Map:
 				min_cost = cost
 				best_path = path
 		self.trajectory = best_path
-		self.current_goal = best_path[2]
+		self.current_goal = best_path[1] # TODO
 		print("Trajectory found")
 
 	def set_current_position(self, data):

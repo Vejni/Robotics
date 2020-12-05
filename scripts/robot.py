@@ -2,8 +2,9 @@
 
 from nav_msgs.msg import Odometry, Path
 from read_config import read_config
-from path_planner import Map
 from controller import Controller
+from path_planner import Map
+import itertools
 import rospy
 
 class Robot:
@@ -23,29 +24,31 @@ class Robot:
 			self.rate.sleep()
 		self.map.set_trajectory()
 		
-		total_path = []
+		total_path_it = []
 		for i in range(1,len(self.map.trajectory) - 1):
 			lst, cost = self.map.a_star(self.map.trajectory[i], self.map.trajectory[i+1])
-			total_path += lst
-
-		current_path, cost = self.map.a_star(self.map.current_position, self.map.current_goal)
+			total_path_it.append(lst)
 		
-		total_path = self.map.create_path(total_path)
-		current_path = self.map.create_path(current_path)
+		total_path = self.map.create_path(list(itertools.chain.from_iterable(total_path_it)))
 
 		contr = Controller()
-		contr.path = current_path
+		contr.path = self.map.create_path(total_path_it[0])
 		while contr.position is None:
 			self.rate.sleep()
 
+		goal_index = 0
 		while not rospy.is_shutdown():
-			if contr.path:
+			if not contr.arrived:
 				contr.set_next_goal()
 				contr.drive()
-				self.current_path_pub.publish(current_path)
+				self.current_path_pub.publish(contr.path)
+			else:
+				print("Destination reached")
+				goal_index += 1
+				if goal_index < len(total_path_it):
+					contr.arrived = False
+					contr.path = self.map.create_path(total_path_it[goal_index])
 			self.total_path_pub.publish(total_path)
-
-			self.rate.sleep()
 
 	def set_current_position(self, data):
 		self.map.set_current_position(data)

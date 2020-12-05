@@ -11,10 +11,10 @@ from geometry_msgs.msg import Point, Quaternion
 
 
 class goalMarkers:
-	def __init__(self):
+	def __init__(self, topic, id):
 		
-		self.pub=self.pub=rospy.Publisher("/goals", MarkerArray, queue_size=200)
-		self.id = 0
+		self.pub=self.pub=rospy.Publisher(topic, MarkerArray, queue_size=200)
+		self.id = id
 		rospy.sleep(1)
 		self.MarkerArray=MarkerArray()
 
@@ -56,7 +56,7 @@ if __name__ == "__main__":
 	instr = rospy.get_param("/instructions")
 	print(instr)
 
-	goal_markers = goalMarkers()
+	goal_markers = goalMarkers("/goals", 0)
 	for goal in instr:
 		goal_markers.add(goal)
 		print(goal)
