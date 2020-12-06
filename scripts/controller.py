@@ -20,6 +20,8 @@ class Controller:
 		self.arrived = False
 		self.prev_position = None
 		self.stuck = False
+		self.turn_speed = 1.5
+		self.forward_speed = 5
 
 		self.look_ahead = 0.05
 		self.pursuit_intersect = None
@@ -38,18 +40,18 @@ class Controller:
 				
 				# Turn
 				while(abs(self.theta - self.goal_angle) > math.pi/6):
-					self.cmd_vel.angular.z = self.limit_rotation((self.goal_angle - self.theta)) * 1.5
+					self.cmd_vel.angular.z = self.limit_rotation((self.goal_angle - self.theta)) * self.turn_speed
 					self.cmd_vel.linear.x = 0.0
 					self.pub.publish(self.cmd_vel)
 
 				while(abs(self.theta - self.goal_angle) > math.pi/15):
-					self.cmd_vel.angular.z = self.limit_rotation((self.goal_angle - self.theta)) * 1.5
+					self.cmd_vel.angular.z = self.limit_rotation((self.goal_angle - self.theta)) * self.turn_speed
 					self.cmd_vel.linear.x = 0.1
 					self.pub.publish(self.cmd_vel)
 
 				# Forward
 				self.cmd_vel.angular.z = 0.0
-				self.cmd_vel.linear.x = self.sigmoid(dx+dy) * 5
+				self.cmd_vel.linear.x = self.sigmoid(dx+dy) * self.forward_speed
 				self.pub.publish(self.cmd_vel)
 
 				# Stuck?

@@ -111,27 +111,66 @@ class Map:
 		""" Find the optimal order of visiting the rooms, this function is heuristic """
 		
 		if optimal:
+			print("Setting Trajectory (Optimal)")
+			instr = rospy.get_param("/instructions")
+			self.goals = [self.get_indices(goal)[::-1] for goal in instr]
+
+			comb = list(itertools.combinations(self.goals + [self.current_position], 2))
+			# cost(a, b) = cost(b, a) so remove repetition
+			comb = [c for c in comb if c[::-1] not in comb]
+
+			paths = {}
+			costs = {}
+			for pair in comb:
+				path, cost = self.a_star(pair[0], pair[1])
+				paths[pair] = path
+				costs[pair] = cost
+			for g in self.goals:
+				path, cost = self.a_star(self.current_position, g)
+				paths[(self.current_position, g)] = path
+				costs[(self.current_position, g)] = cost
 
 		else:
 			print("Setting Trajectory (Heuristic Costs)")
 			instr = rospy.get_param("/instructions")
 			self.goals = [self.get_indices(goal)[::-1] for goal in instr]
 
-			perm = list(itertools.permutations(self.goals))
-
-			best_path = []
-			min_cost = float("inf")
-			for index, path in enumerate(perm):
-				path = [self.current_position] + list(path)
-				cost = 0
-				for i in range(len(path)-1):
+		perm = list(itertools.permutations(self.goals))
+		best_path = []
+		min_cost = float("inf")
+		for index, path in enumerate(perm):
+			path = [self.current_position] + list(path)
+			cost = 0
+			for i in range(len(path)-1):
+				if optimal:
+					try:
+						cost += costs[(path[i], path[i+1])]
+					except:
+						cost += costs[(path[i+1], path[i])]
+				else:
 					cost += self.heuristic_value(path[i], path[i+1])
-				if cost < min_cost:
-					min_cost = cost
-					best_path = path
-			self.trajectory = best_path
-			self.current_goal = best_path[1]
-			print("Trajectory found (Heuristic Costs)")
+			if cost < min_cost:
+				min_cost = cost
+				best_path = path
+
+		self.trajectory = best_path
+		self.current_goal = best_path[1]
+		print("Trajectory found")
+
+		total_path_it = []
+		if optimal:
+			for i in range(len(self.trajectory) - 1):
+				try:
+					path = paths[(self.trajectory[i], self.trajectory[i + 1])]
+				except:
+					path = paths[(self.trajectory[i + 1], self.trajectory[i])][::-1]
+				total_path_it.append(path)
+		else:
+			for i in range(len(self.trajectory) - 1):
+				lst, cost = self.a_star(self.trajectory[i], self.trajectory[i+1])
+				total_path_it.append(lst)
+
+		return total_path_it
 
 	def set_current_position(self, data):
 		""" Find and convert current position into grid representation """

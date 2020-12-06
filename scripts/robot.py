@@ -22,13 +22,7 @@ class Robot:
 
 		while self.map.grid is None:
 			self.rate.sleep()
-		self.map.set_trajectory()
-		
-		total_path_it = []
-		for i in range(1,len(self.map.trajectory) - 1):
-			lst, cost = self.map.a_star(self.map.trajectory[i], self.map.trajectory[i+1])
-			total_path_it.append(lst)
-		
+		total_path_it = self.map.set_trajectory(optimal=False)
 		total_path = self.map.create_path(list(itertools.chain.from_iterable(total_path_it)))
 
 		contr = Controller()
