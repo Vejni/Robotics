@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-This script reads the map, prioritises goals and sets a trajectory
+This script is the path planner. It creates the map grid, prioritises goals, and sets a trajectory using A*
 """
 
 from geometry_msgs.msg import PoseStamped
@@ -10,16 +10,19 @@ from matplotlib import pyplot as plt
 from geometry_msgs.msg import Point
 from queue import PriorityQueue
 from nav_msgs.msg import Path
+from random import shuffle
 import itertools
 import rospy
 
 
 class Map:
 	def __init__(self):
+		""" Object Creator """
 		self.map_sub = rospy.Subscriber("/map", OccupancyGrid, self.create_grid_callback)
 		self.rate = rospy.Rate(1)
 
 	def create_grid_callback(self, map):
+		""" Callback subscribed to /map, creates grid representation that can be passed to A* """
 		self.width = map.info.width
 		self.height = map.info.height
 		self.origin = map.info.origin.position
@@ -30,7 +33,7 @@ class Map:
 
 		i = 0
 		# get this param, instead of hardcode
-		inflation = 6 # max :/
+		inflation = 6 # max inflation we can get away with
 		for y in range(self.height):
 			for x in range(self.width):
 				if (map.data[i]!= 0):
@@ -42,34 +45,9 @@ class Map:
 
 		self.grid = temp_grid
 		print("Grid created")
-		"""
-		# Debug
-		self.grid[self.current_position[0]][self.current_position[1]] = 1
-		self.grid[self.current_goal[0]][self.current_goal[1]] = 1
-		for p in lst:
-			self.grid[p[0]][p[1]] = 1
-		plt.imshow(self.grid)
-		plt.show()
-		"""
-		"""
-		# Debug
-		y = 0
-		points = []
-
-		while y < self.height:
-			for x in range(self.width):
-				if map.data[y * self.width + x]:
-					points.append([x, y])
-			y += 1
-
-		plt.scatter([p[0] for p in points], [p[1] for p in points], marker=".")
-		plt.scatter(self.current_goal[0], self.current_goal[1])
-		plt.scatter(self.current_position[0], self.current_position[1], marker=",")
-		plt.scatter([p[0] for p in lst], [p[1] for p in lst], marker=".")
-		plt.show()
-		"""
 
 	def create_path(self, path):
+		""" Convert grig path to world poses and path object """
 		points = [self.get_coords(p[::-1]) for p in path]
 		path = Path()
 		path.header.frame_id = "map"
@@ -84,6 +62,7 @@ class Map:
 		return path
 	
 	def a_star(self, current_pos, current_goal):
+		""" A* with priority queue, returns the path and cost """
 		print("Planning trajectory from", current_pos, "to", current_goal)
 		# list is unhashable
 		current_pos = (current_pos[0], current_pos[1])
@@ -125,47 +104,55 @@ class Map:
 		return [current_pos], 0
 
 	def heuristic_value(self, point, current_goal):
+		""" Return heuristic distance from goal """
 		return ((point[0] - current_goal[0])**2 + (point[1] - current_goal[1])**2)**0.5
 
-	def set_trajectory(self):
-		# TODO
-		print("Setting Trajectory")
-		instr = rospy.get_param("/instructions")
-		self.goals = [self.get_indices(goal)[::-1] for goal in instr]
+	def set_trajectory(self, optimal=True):
+		""" Find the optimal order of visiting the rooms, this function is heuristic """
+		
+		if optimal:
 
-		perm = list(itertools.permutations(self.goals))
+		else:
+			print("Setting Trajectory (Heuristic Costs)")
+			instr = rospy.get_param("/instructions")
+			self.goals = [self.get_indices(goal)[::-1] for goal in instr]
 
-		best_path = []
-		min_cost = float("inf")
-		for index, path in enumerate(perm):
-			path = [self.current_position] + list(path)
-			cost = 0
-			for i in range(len(path)-1):
-				cost += self.heuristic_value(path[i], path[i+1])
-			if cost < min_cost:
-				min_cost = cost
-				best_path = path
-		self.trajectory = best_path
-		self.current_goal = best_path[1] # TODO
-		print("Trajectory found")
+			perm = list(itertools.permutations(self.goals))
+
+			best_path = []
+			min_cost = float("inf")
+			for index, path in enumerate(perm):
+				path = [self.current_position] + list(path)
+				cost = 0
+				for i in range(len(path)-1):
+					cost += self.heuristic_value(path[i], path[i+1])
+				if cost < min_cost:
+					min_cost = cost
+					best_path = path
+			self.trajectory = best_path
+			self.current_goal = best_path[1]
+			print("Trajectory found (Heuristic Costs)")
 
 	def set_current_position(self, data):
-		# TODO
+		""" Find and convert current position into grid representation """
 		point = (data.pose.pose.position.x, data.pose.pose.position.y)
 		self.current_position = self.get_indices(point)[::-1]
 
 	def get_indices(self, point):
+		""" Convert position into grid location """
 		x = int((point[0] - self.origin.x) / self.resolution)
 		y = int((point[1] - self.origin.y) / self.resolution)
 		return (x, y)
 
 	def get_coords(self, point):
+		""" From grid location to world coordinates """
 		x = point[0] * self.resolution + self.origin.x
 		y = point[1] * self.resolution + self.origin.y
 		return (x, y, 0)
 
 	def get_neighbours(self, point, previous_point):
-		# TODO: Refactor
+		""" Get all neighbouring nodes that are not blocked by obstacles, used by A* """
+		""" Permuting the order of neighbours results in less squigly lines """
 
 		step_size = 1
 		neighbours = []
@@ -175,39 +162,24 @@ class Map:
 		else:
 			prev_x, prev_y = None, None
 
-		# down
-		try:
-			# print(self.grid[x][y + step_size])
-			if (not(self.grid[x][y + step_size]) and not(x == prev_x and y + step_size == prev_y)):
-				neighbours.append((x, y + step_size))
-		except IndexError:
-			pass
-		# up
-		try:
-			# print(self.grid[x][y - step_size])
-			if (not(self.grid[x][y - step_size]) and not(x == prev_x and y - step_size == prev_y)):
-				neighbours.append((x, y - step_size))
-		except IndexError:
-			pass
-		# left
-		try:
-			# print(self.grid[x - step_size][y])
-			if (not(self.grid[x - step_size][y]) and not(x - step_size == prev_x and y == prev_y)):
-				neighbours.append((x - step_size, y))
-		except IndexError:
-			pass
-		# right
-		try:
-			# print(self.grid[x + step_size][y])
-			if (not(self.grid[x + step_size][y]) and not(x + step_size == prev_x and y == prev_y)):
-				neighbours.append((x + step_size, y))
-		except IndexError:
-			pass
+		for i in range(-step_size, step_size + 1, step_size):
+			for j in range(-step_size, step_size + 1, step_size):
+				try:
+					if (
+						not(self.grid[x + i][y + j]) and
+						not(((x + i) == prev_x) and ((y + j) == prev_y)) and
+						not((i == 0) and (j == 0))
+					):
+						neighbours.append((x + i, y + j))
+				except IndexError:
+					pass
 
+		shuffle(neighbours)
 		return neighbours
 
 
 if __name__ == "__main__":
+	""" For testing, this script is typically run from robot.py """
 	rospy.init_node("path_planning")
 	Map()
 	rospy.spin()
