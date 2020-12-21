@@ -8,9 +8,11 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
 from matplotlib import pyplot as plt
 from geometry_msgs.msg import Point
+from scipy.signal import convolve2d
 from queue import PriorityQueue
 from nav_msgs.msg import Path
 from random import shuffle
+import numpy as np
 import itertools
 import rospy
 
@@ -20,6 +22,8 @@ class Map:
 		""" Object Creator """
 		self.map_sub = rospy.Subscriber("/map", OccupancyGrid, self.create_grid_callback)
 		self.rate = rospy.Rate(1)
+		self.grid = None
+		self.costmap = None
 
 	def create_grid_callback(self, map):
 		""" Callback subscribed to /map, creates grid representation that can be passed to A* """
@@ -45,6 +49,25 @@ class Map:
 
 		self.grid = temp_grid
 		print("Grid created")
+		self.create_costmap()
+	
+	def create_costmap(self):
+		""" Introduces cost for going close to walls, uses blur convolution to reduce runtime """
+
+		max_val = 10
+		blur = np.ones((10, 10))
+
+		temp = np.array([[self.grid[y][x] * max_val for x in range(self.width)] for y in range(self.height)])
+		self.costmap = convolve2d(temp, blur)
+		
+		print("Costmap created")
+		"""
+		# Debug
+		from matplotlib import pyplot as plt
+		plt.imshow(self.costmap)
+		plt.show()
+		"""
+		
 
 	def create_path(self, path):
 		""" Convert grig path to world poses and path object """
@@ -92,7 +115,7 @@ class Map:
 				return path[::-1], total_cost
 
 			for neighbour in self.get_neighbours(current, parents[current]):
-				temp = g[current] + 1
+				temp = g[current] + 1 + self.costmap[neighbour[0]][neighbour[1]]
 				if ((neighbour not in g) or temp < g[neighbour]):
 					g[neighbour] = temp
 					f = temp + self.heuristic_value(neighbour, current_goal)
@@ -220,5 +243,18 @@ class Map:
 if __name__ == "__main__":
 	""" For testing, this script is typically run from robot.py """
 	rospy.init_node("path_planning")
-	Map()
+	map = Map()
+	while map.costmap is None:
+		map.rate.sleep()
+	grid = map.costmap
+	path, _ = map.a_star((268, 728), (248, 773))
+	for p in path:
+		grid[p[0]][p[1]] = 1000
+	path, _ = map.a_star((248, 773), (448, 773))
+	
+	for p in path:
+		grid[p[0]][p[1]] = 1000
+
+	plt.imshow(grid)
+	plt.show()
 	rospy.spin()

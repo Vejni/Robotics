@@ -15,12 +15,11 @@ class Robot:
 		self.rate.sleep()
 
 		self.map = Map()
-		self.map.grid = None
 		self.pos_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, self.set_current_position)
 		self.total_path_pub = rospy.Publisher("/total_planned_path", Path, queue_size=1)
 		self.current_path_pub = rospy.Publisher("/current_planned_path", Path, queue_size=1)
 
-		while self.map.grid is None:
+		while self.map.costmap is None:
 			self.rate.sleep()
 		total_path_it = self.map.set_trajectory(optimal=False)
 		total_path = self.map.create_path(list(itertools.chain.from_iterable(total_path_it)))
@@ -32,6 +31,7 @@ class Robot:
 
 		goal_index = 0
 		while not rospy.is_shutdown():
+			
 			if not contr.arrived:
 				contr.set_next_goal()
 				contr.drive()
@@ -42,6 +42,7 @@ class Robot:
 				if goal_index < len(total_path_it):
 					contr.arrived = False
 					contr.path = self.map.create_path(total_path_it[goal_index])
+
 			self.total_path_pub.publish(total_path)
 
 	def set_current_position(self, data):
