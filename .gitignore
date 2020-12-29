@@ -1,2 +1,2 @@
-/scripts/Bin
-/scripts/__pycache__
+/scripts/Bin/*
+/scripts/__pycache__/*

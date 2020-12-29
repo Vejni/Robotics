@@ -55,7 +55,7 @@ class Map:
 		""" Introduces cost for going close to walls, uses blur convolution to reduce runtime """
 
 		max_val = 10
-		blur = np.ones((10, 10))
+		blur = np.ones((10, 25))
 
 		temp = np.array([[self.grid[y][x] * max_val for x in range(self.width)] for y in range(self.height)])
 		self.costmap = convolve2d(temp, blur)
@@ -66,8 +66,7 @@ class Map:
 		from matplotlib import pyplot as plt
 		plt.imshow(self.costmap)
 		plt.show()
-		"""
-		
+		"""		
 
 	def create_path(self, path):
 		""" Convert grig path to world poses and path object """
@@ -249,11 +248,11 @@ if __name__ == "__main__":
 	grid = map.costmap
 	path, _ = map.a_star((268, 728), (248, 773))
 	for p in path:
-		grid[p[0]][p[1]] = 1000
+		grid[p[0]][p[1]] = 10000
 	path, _ = map.a_star((248, 773), (448, 773))
 	
 	for p in path:
-		grid[p[0]][p[1]] = 1000
+		grid[p[0]][p[1]] = 10000
 
 	plt.imshow(grid)
 	plt.show()
