@@ -2,7 +2,7 @@
 
 """ This is the main controller, plus the scanner logic for obstacle avoidance """
 
-from geometry_msgs.msg import Point, Twist, PointStamped, PoseStamped
+from geometry_msgs.msg import Point, Twist, PointStamped, PoseStamped, PoseWithCovarianceStamped
 from tf.transformations import euler_from_quaternion
 from nav_msgs.msg import Odometry, Path
 from sensor_msgs.msg import LaserScan
@@ -14,8 +14,8 @@ import math
 class Controller:
 	def __init__(self):
 		self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size= 1)
-		rospy.wait_for_message("/base_pose_ground_truth", Odometry)
-		self.pose_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, self.get_pose)
+		rospy.wait_for_message("/amcl_pose", PoseWithCovarianceStamped)
+		self.pose_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.get_pose)
 		self.laser_sub = rospy.Subscriber("/base_scan", LaserScan, self.laser_callback)
 		self.following = False
 		self.cmd_vel = Twist()
