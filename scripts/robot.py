@@ -42,13 +42,26 @@ class Robot:
 				self.current_path_pub.publish(contr.path)
 
 			elif contr.vacuuming:
-				contr.vacuuming = False
-				contr.vacuum()
+				#contr.vacuuming = False
+
+				while contr.read_vacuum:
+					self.rate.sleep()
+
+				#contr.vacuum()
+				contr.set_next_goal()
+				contr.drive()
 				self.vaccum_pub.publish(True)
+				self.current_path_pub.publish(contr.vacuum_path)
 
 			else:
 				print("Destination reached - Starting to vacuum")
+				contr.turn_to_angle(0)
+				while contr.turning:
+					self.rate.sleep()
+
+				contr.read_vacuum = True
 				contr.vacuuming = True
+
 				goal_index += 1
 				if goal_index < len(total_path_it):
 					contr.arrived = False

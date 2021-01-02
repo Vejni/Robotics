@@ -114,7 +114,8 @@ class Map:
 				return path[::-1], total_cost
 
 			for neighbour in self.get_neighbours(current, parents[current]):
-				temp = g[current] + 1 + self.costmap[neighbour[0]][neighbour[1]]
+				#TODO
+				temp = g[current] + 1 #+ self.costmap[neighbour[0]][neighbour[1]]
 				if ((neighbour not in g) or temp < g[neighbour]):
 					g[neighbour] = temp
 					f = temp + self.heuristic_value(neighbour, current_goal)

@@ -1,24 +1,25 @@
 #!/usr/bin/env python
 
+""" This is the main controller, plus the scanner logic for obstacle avoidance """
+
+from geometry_msgs.msg import Point, Twist, PointStamped, PoseStamped
 from tf.transformations import euler_from_quaternion
-from geometry_msgs.msg import Point, Twist, PointStamped
 from nav_msgs.msg import Odometry, Path
 from sensor_msgs.msg import LaserScan
-from goal_marker import goalMarkers
 from std_msgs.msg import Header
+import numpy as np
 import rospy
 import math
-import tf
 
 class Controller:
 	def __init__(self):
 		self.pub = rospy.Publisher("/cmd_vel", Twist, queue_size= 1)
 		rospy.wait_for_message("/base_pose_ground_truth", Odometry)
 		self.pose_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, self.get_pose)
-		self.following = False
 		self.laser_sub = rospy.Subscriber("/base_scan", LaserScan, self.laser_callback)
+		self.following = False
 		self.cmd_vel = Twist()
-		self.epsilon = 0.05
+		self.epsilon = 0.03
 		self.collision_epsilon = 0.03
 		self.position = None
 		self.rate = rospy.Rate(100)
@@ -31,6 +32,7 @@ class Controller:
 		self.robot_width = 3
 		self.speed = 0
 		self.counter = 0
+		self.read_vacuum = False
 
 	def laser_callback(self, data):
 		regions = {
@@ -92,7 +94,86 @@ class Controller:
 			self.stuck = False
 			self.following = False
 
+		if self.read_vacuum:
+			self.read_room(regions)
+
 		self.rate.sleep()
+
+	def read_room(self, regions):
+		# Get distance to walls in each directions
+		d_west = regions["front"]
+		d_south = regions["right"]
+		d_north = regions["left"]
+
+		# No scanner on the back, so turn around
+		self.turn_to_angle(math.pi)
+		while self.turning:
+			self.rate.sleep()
+		d_east = regions["front"]
+		d_robot = 0.3
+
+		p_north_east = Point()
+		p_north_east.x = self.position.x - d_east + d_robot
+		p_north_east.y = self.position.y + d_north - d_robot
+		p_north_east.z = 0
+
+		p_north_west = Point()
+		p_north_west.x = self.position.x + d_west - d_robot
+		p_north_west.y = self.position.y + d_north - d_robot
+		p_north_west.z = 0
+
+		p_south_east = Point()
+		p_south_east.x = self.position.x - d_east + d_robot
+		p_south_east.y = self.position.y - d_south + d_robot
+		p_south_east.z = 0
+
+		p_south_west = Point()
+		p_south_west.x = self.position.x + d_west - d_robot
+		p_south_west.y = self.position.y - d_south + d_robot
+		p_south_west.z = 0
+
+		self.room_points = [p_north_east, p_north_west, p_south_east, p_south_west]
+		self.create_vacuum_path()
+
+		# Flip the switch
+		self.read_vacuum = False
+
+	def create_vacuum_path(self):
+		path = Path()
+		path.header.frame_id = "map"
+		even = 1
+		for x in np.linspace(self.room_points[0].x, self.room_points[1].x + 0.15, 15):
+			if even == 1:
+				start = self.room_points[1].y
+				end = self.room_points[2].y
+			else:
+				end = self.room_points[1].y
+				start = self.room_points[2].y		
+
+			for y in np.linspace(start, end, 50):
+				pose = PoseStamped()
+				pose.header.frame_id = "map"
+				pose.pose.position.x = x
+				pose.pose.position.y = y
+				pose.pose.position.z = 0
+				path.poses.append(pose)
+			even *= -1
+
+		self.vacuum_path = path
+		
+	def turn_to_angle(self, angle):
+		self.turning = True
+		while abs(self.theta - angle) > math.pi/18:
+			self.cmd_vel.linear.x = 0
+			self.cmd_vel.angular.z = 0.5
+			self.pub.publish(self.cmd_vel)
+			self.rate.sleep()
+
+		self.cmd_vel.linear.x = 0
+		self.cmd_vel.angular.z = 0
+		self.pub.publish(self.cmd_vel)
+
+		self.turning = False
 
 	def get_pose(self, data):
 		self.position = data.pose.pose.position
@@ -130,10 +211,16 @@ class Controller:
 
 	def set_next_goal(self):
 		try:	
-			self.goal = self.path.poses.pop(0).pose.position
+			if self.vacuuming:
+				self.goal = self.vacuum_path.poses.pop(0).pose.position
+			else:
+				self.goal = self.path.poses.pop(0).pose.position
 			self.goal_angle = math.atan2(self.goal.y - self.position.y, self.goal.x - self.position.x)
 		except:
-			self.arrived = True
+			if self.vacuuming:
+				self.vacuuming = False
+			else:
+				self.arrived = True
 	
 	def sigmoid(self, x):
 		return 1 / (1 + math.exp(-(10 * (x - 0.3))))
@@ -160,7 +247,6 @@ class Controller:
 			self.pub.publish(self.cmd_vel)
 		self.rate.sleep()
 
-	
 
 if __name__ == "__main__":
 	rospy.init_node("controller")
