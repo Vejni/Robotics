@@ -14,7 +14,6 @@ def read_config():
 		with open("./world/config.yaml") as conf:
 			stream = yaml.safe_load(conf)
 			for param in stream.keys():
-				print(param, stream[param])
 				rospy.set_param(param, stream[param])
 	except Exception as e:
 		print("Error reading config: ", e)

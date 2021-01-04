@@ -33,6 +33,7 @@ class Controller:
 		self.speed = 0
 		self.counter = 0
 		self.read_vacuum = False
+		self.vacuum_path = None
 
 	def laser_callback(self, data):
 		regions = {
@@ -210,7 +211,7 @@ class Controller:
 				self.rate.sleep()
 
 	def set_next_goal(self):
-		try:	
+		try:
 			if self.vacuuming:
 				self.goal = self.vacuum_path.poses.pop(0).pose.position
 			else:
@@ -232,7 +233,7 @@ class Controller:
 			angle -= 2*math.pi
 		return angle
 	
-	def vacuum(self):
+	def vacuum_spiral(self):
 		if not self.following and not self.stuck:
 			self.cmd_vel.angular.z = 1
 			if self.speed <= 0.8:

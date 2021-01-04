@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 
 """
-This scripts reads the instructions parameter and creates markers for the goals in rviz
+This scripts reads the instructions parameter and creates markers for the goals and chargers in rviz
 """
 
-import rospy
-from nav_msgs.msg import Odometry
 from visualization_msgs.msg import Marker, MarkerArray
 from geometry_msgs.msg import Point, Quaternion
+from nav_msgs.msg import Odometry
+import rospy
 
 
-class goalMarkers:
+class Markers:
 	def __init__(self, topic, id):
 		
 		self.pub = rospy.Publisher(topic, MarkerArray, queue_size=200)
@@ -18,10 +18,10 @@ class goalMarkers:
 		rospy.sleep(1)
 		self.MarkerArray = MarkerArray()
 	
-	def add(self, goal):
+	def add(self, goal, shape, rgb):
 		
 		self.goal = Marker()
-		self.goal.type = Marker.SPHERE
+		self.goal.type = shape
 		self.goal.action = Marker.ADD
 		self.goal.header.frame_id="map"
 		self.id += 1
@@ -29,9 +29,9 @@ class goalMarkers:
 		self.goal.lifetime = rospy.Duration(0)
 
 		# Colour
-		self.goal.color.r = 0
-		self.goal.color.b = 1
-		self.goal.color.g = 0
+		self.goal.color.r = rgb[0]
+		self.goal.color.g = rgb[1]
+		self.goal.color.b = rgb[2]
 		self.goal.color.a = 1
 		
 		# Size
@@ -65,14 +65,20 @@ class goalMarkers:
      
 
 if __name__ == "__main__":
-	rospy.init_node('goal_markers')
-	instr = rospy.get_param("/instructions")
-	print(instr)
+	rospy.init_node('simple_markers')
+	markers = Markers("/goals", 0)
 
-	goal_markers = goalMarkers("/goals", 0)
+	# Goals
+	instr = rospy.get_param("/instructions")
 	for goal in instr:
-		goal_markers.add(goal)
-		print(goal)
-	goal_markers.send()
+		markers.add(goal, Marker.SPHERE, (0,0,1))
+
+	# Charging points
+	chargers = rospy.get_param("/chargers")
+	for c in chargers:
+		markers.add(c, Marker.CUBE, (1, 1, 0))
+
+
+	markers.send()
 
 	rospy.spin()

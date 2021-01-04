@@ -242,6 +242,25 @@ class Map:
 
 		shuffle(neighbours)
 		return neighbours
+	
+	def plan_charging(self):
+		chargers = rospy.get_param("/chargers")
+		chargers = [self.get_indices(c[0:2])[::-1] for c in chargers]
+
+		min_cost = float("inf")
+		for c in chargers:
+
+			path, cost = self.a_star(self.current_position, c, traj=False)
+			if cost < min_cost:
+				min_cost = cost
+				best_path = path
+
+		self.replan_pos = self.current_position
+		return self.create_path(best_path)
+
+	def replan(self, truncated_path):
+		print("Replanning to last position")
+		return (self.create_path(self.a_star(self.current_position, self.replan_pos, traj=False)))
 
 
 if __name__ == "__main__":
