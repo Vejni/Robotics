@@ -42,6 +42,7 @@ class Robot:
 				contr.set_next_goal()
 				contr.drive()
 				self.current_path_pub.publish(contr.path)
+				self.vaccum_pub.publish(False)
 
 			elif contr.vacuuming:
 

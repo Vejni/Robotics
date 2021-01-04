@@ -25,6 +25,7 @@ class Map:
 		self.grid = None
 		self.costmap = None
 		self.origin = None
+		self.debug = rospy.get_param("/debug")
 
 	def create_grid_callback(self, map):
 		""" Callback subscribed to /map, creates grid representation that can be passed to A* """
@@ -115,7 +116,7 @@ class Map:
 				return path[::-1], total_cost
 
 			for neighbour in self.get_neighbours(current, parents[current]):
-				if traj:
+				if traj or self.debug:
 					temp = g[current] + 1
 				else:
 					temp = g[current] + 1 + self.costmap[neighbour[0]][neighbour[1]]

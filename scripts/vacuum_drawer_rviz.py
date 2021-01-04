@@ -23,8 +23,8 @@ class VacuumMarkers:
 		self.MarkerArray = MarkerArray()
 		self.radius = r
 
-	def switch(self, vacuuming):
-		self.vacuuming = vacuuming
+	def switch(self, data):
+		self.vacuuming = data.data
 		if not self.vacuuming:
 			self.clean_markers()
 		self.rate.sleep()
@@ -69,11 +69,8 @@ class VacuumMarkers:
 		self.rate.sleep()
 
 	def clean_markers(self):
-		self.MarkerArray = MarkerArray()
-		if self.MarkerArray.markers:
-			for m in self.MarkerArray.markers:
-				m.action = m.DELETE
-				self.MarkerArray.markers.append(m)
+		for m in self.MarkerArray.markers:
+			m.action = m.DELETE
 		self.pub.publish(self.MarkerArray)
      
 
