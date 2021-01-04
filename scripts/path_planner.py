@@ -24,6 +24,7 @@ class Map:
 		self.rate = rospy.Rate(1)
 		self.grid = None
 		self.costmap = None
+		self.origin = None
 
 	def create_grid_callback(self, map):
 		""" Callback subscribed to /map, creates grid representation that can be passed to A* """
@@ -83,7 +84,7 @@ class Map:
 
 		return path
 	
-	def a_star(self, current_pos, current_goal):
+	def a_star(self, current_pos, current_goal, traj=False):
 		""" A* with priority queue, returns the path and cost """
 		print("Planning trajectory from", current_pos, "to", current_goal)
 		# list is unhashable
@@ -114,8 +115,10 @@ class Map:
 				return path[::-1], total_cost
 
 			for neighbour in self.get_neighbours(current, parents[current]):
-				#TODO
-				temp = g[current] + 1 #+ self.costmap[neighbour[0]][neighbour[1]]
+				if traj:
+					temp = g[current] + 1
+				else:
+					temp = g[current] + 1 + self.costmap[neighbour[0]][neighbour[1]]
 				if ((neighbour not in g) or temp < g[neighbour]):
 					g[neighbour] = temp
 					f = temp + self.heuristic_value(neighbour, current_goal)
@@ -145,11 +148,11 @@ class Map:
 			paths = {}
 			costs = {}
 			for pair in comb:
-				path, cost = self.a_star(pair[0], pair[1])
+				path, cost = self.a_star(pair[0], pair[1], traj=True)
 				paths[pair] = path
 				costs[pair] = cost
 			for g in self.goals:
-				path, cost = self.a_star(self.current_position, g)
+				path, cost = self.a_star(self.current_position, g, traj=True)
 				paths[(self.current_position, g)] = path
 				costs[(self.current_position, g)] = cost
 

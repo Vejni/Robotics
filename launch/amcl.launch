@@ -1,5 +1,5 @@
 <launch>
-    <node name="amcl" pkg="amcl" type="amcl">
+    <node name="amcl" pkg="amcl" type="amcl" output="log">
       <remap from="/scan" to="/base_scan"/>
       <param name="odom_model_type" value="diff"/>
       <param name="transform_tolerance" value="0.2" />

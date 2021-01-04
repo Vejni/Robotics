@@ -110,7 +110,7 @@ class Controller:
 		while self.turning:
 			self.rate.sleep()
 		d_east = regions["front"]
-		d_robot = 0.3
+		d_robot = 0.35
 
 		p_north_east = Point()
 		p_north_east.x = self.position.x - d_east + d_robot

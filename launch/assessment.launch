@@ -15,6 +15,7 @@
     <node name="pose_marker" pkg="assessment" type="pose_marker.py" />
     <node name="path_marker" pkg="assessment" type="path_marker.py" />
     <node name="goal_marker" pkg="assessment" type="goal_marker.py" />
+    <node name="vacuum_marker" pkg="assessment" type="vacuum_drawer_rviz.py" />
     <!--<node name="robot" pkg="assessment" type="robot.py" output="screen"/>-->
     <!--THE TELEOP NODE BELOW ALLOWS YOU TO DRIVE AROUND WITH THE KEYBOARD FOR TESTING, UNCOMMENT AS DESIRED. -->
     <node name="tele" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py"/>

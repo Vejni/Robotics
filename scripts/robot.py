@@ -21,7 +21,7 @@ class Robot:
 		self.current_path_pub = rospy.Publisher("/current_planned_path", Path, queue_size=1)
 		self.vaccum_pub = rospy.Publisher("/vacuum", Bool, queue_size=1)
 
-		while self.map.costmap is None:
+		while self.map.costmap or self.map.origin is None:
 			self.rate.sleep()
 
 		total_path_it = self.map.set_trajectory(optimal=rospy.get_param("optimal_path"))
@@ -44,7 +44,6 @@ class Robot:
 				self.current_path_pub.publish(contr.path)
 
 			elif contr.vacuuming:
-				#contr.vacuuming = False
 
 				while contr.read_vacuum:
 					self.rate.sleep()
