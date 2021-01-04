@@ -6,7 +6,6 @@ Panels:
       Expanded:
         - /Status1
         - /Grid1
-        - /PoseWithCovariance1
       Splitter Ratio: 0.5
     Tree Height: 626
   - Class: rviz/Selection
@@ -244,6 +243,23 @@ Visualization Manager:
       Topic: /amcl_pose
       Unreliable: false
       Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: true
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Arrow (Flat)
+      Topic: /particlecloud
+      Unreliable: false
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -272,7 +288,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 16.346214294433594
+      Distance: 6.680298805236816
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -290,7 +306,7 @@ Visualization Manager:
       Near Clip Distance: 0.009999999776482582
       Pitch: 0.9853984117507935
       Target Frame: <Fixed Frame>
-      Yaw: 5.073581218719482
+      Yaw: 4.6885809898376465
     Saved: ~
 Window Geometry:
   Displays:
@@ -308,5 +324,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: -4
-  Y: -80
+  X: -6
+  Y: -120

@@ -24,7 +24,7 @@ class Robot:
 		while self.map.costmap is None:
 			self.rate.sleep()
 
-		total_path_it = self.map.set_trajectory(optimal=False)
+		total_path_it = self.map.set_trajectory(optimal=rospy.get_param("optimal_path"))
 		total_path = self.map.create_path(list(itertools.chain.from_iterable(total_path_it)))
 
 		contr = Controller()
@@ -35,6 +35,8 @@ class Robot:
 		goal_index = 0
 		finished = False
 		contr.vacuuming = False
+
+
 		while not rospy.is_shutdown() or not finished:
 			if not contr.arrived and not contr.vacuuming:
 				contr.set_next_goal()

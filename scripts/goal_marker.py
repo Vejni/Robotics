@@ -43,7 +43,13 @@ class goalMarkers:
 		# Position
 		self.goal.pose.position.x = goal[0]
 		self.goal.pose.position.y = goal[1]
-		self.goal.pose.position.z = 0
+		self.goal.pose.position.z = 0.0
+
+		# Orientation
+		self.goal.pose.orientation.x = 0.0
+		self.goal.pose.orientation.y = 0.0
+		self.goal.pose.orientation.z = 0.0
+		self.goal.pose.orientation.w = 1.0
 
 		self.MarkerArray.markers.append(self.goal)
 		

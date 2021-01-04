@@ -2,6 +2,7 @@
   <arg name="battery" default="0" />
   <arg name="draw_vacuum" default="0" />
   <arg name="optimal_path" default="0" />
+  <param name="optimal_path" value="$(arg optimal_path)" />
   <param name="use_sim_time" type="bool" value="True"/>
   <rosparam command="load" file="$(find assessment)/world/config.yaml"/>
   <node name="stage" pkg="stage_ros" type="stageros" args="$(find assessment)/world/world.world"/>
@@ -17,44 +18,7 @@
     <!--<node name="robot" pkg="assessment" type="robot.py" output="screen"/>-->
     <!--THE TELEOP NODE BELOW ALLOWS YOU TO DRIVE AROUND WITH THE KEYBOARD FOR TESTING, UNCOMMENT AS DESIRED. -->
     <node name="tele" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py"/>
-    <node name="amcl" pkg="amcl" type="amcl">
-      <remap from="/scan" to="/base_scan"/>
-      <param name="odom_model_type" value="diff"/>
-      <param name="transform_tolerance" value="0.2" />
-      <param name="gui_publish_rate" value="10.0"/>
-      <param name="laser_max_beams" value="30"/>
-      <param name="min_particles" value="100"/>
-      <param name="max_particles" value="1000"/>
-      <param name="kld_err" value="0.05"/>
-      <param name="kld_z" value="0.99"/>
-      <param name="odom_alpha1" value="0.1"/>
-      <param name="odom_alpha2" value="0.1"/>
-      <param name="odom_alpha3" value="0.1"/>
-      <param name="odom_alpha4" value="0.1"/>
-      <param name="laser_z_hit" value="0.9"/>
-      <param name="laser_z_short" value="0.05"/>
-      <param name="laser_z_max" value="0.05"/>
-      <param name="laser_z_rand" value="0.05"/>
-      <param name="laser_sigma_hit" value="0.1"/>
-      <param name="laser_lambda_short" value="0.1"/>
-      <param name="laser_lambda_short" value="0.1"/>
-      <param name="laser_model_type" value="beam"/>
-      <param name="laser_likelihood_max_dist" value="0.2"/>
-      <param name="update_min_d" value="0.2"/>
-      <param name="update_min_a" value="0.5"/>
-      <param name="odom_frame_id" value="odom"/>
-      <param name="base_frame_id" value="base_link"/>
-      <param name="global_frame_id" value="map"/>
-      <param name="resample_interval" value="5"/>
-      <param name="transform_tolerance" value="0.1"/>
-      <param name="recovery_alpha_slow" value="0.001"/>
-      <param name="recovery_alpha_fast" value="0.1"/>
-      <param name="initial_pose_a" value="0.0"/>
-      <param name="initial_pose_x" value="2"/>
-      <param name="initial_pose_y" value="0.0"/>
-      <param name="initial_cov_xx" value="0.5"/>
-      <param name="initial_cov_yy" value="0.5"/>
-    </node>
+    <include file="$(find assessment)/launch/amcl.launch"/>
     <node name="fake_localization" pkg="fake_localization" type="fake_localization" /> 
   </group>
 
