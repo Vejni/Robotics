@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+""" Main script of the project """
+
+from geometry_msgs.msg import PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry, Path
 from std_msgs.msg import Bool, Float32
 from read_config import read_config
@@ -14,9 +17,10 @@ class Robot:
 		self.rate = rospy.Rate(1)
 		self.map = Map()
 		self.battery_low = False
+		self.no_vacuum = rospy.get_param("/no_vacuum")
 
 		# Subscribers
-		self.pos_sub = rospy.Subscriber("/base_pose_ground_truth", Odometry, self.set_current_position)
+		self.pos_sub = rospy.Subscriber("/amcl_pose", PoseWithCovarianceStamped, self.set_current_position)
 		self.battery_sub = rospy.Subscriber("/battery", Float32, self.battery_check)
 
 		# Publishers
@@ -27,6 +31,9 @@ class Robot:
 		# Wait for map
 		while self.map.costmap or self.map.origin is None:
 			self.rate.sleep()
+
+		# Give it some more time
+		rospy.Rate(0.2).sleep()
 
 		# Set trajectory
 		total_path_it = self.map.set_trajectory(optimal=rospy.get_param("optimal_path"))
@@ -60,15 +67,17 @@ class Robot:
 				if self.recharged:
 					contr.path = self.save_path
 					if self.stopped_vacuuming:
-						self.contr.vacuuming = True
 						self.battery_low = False
+						if not self.no_vacuum:						
+							self.contr.vacuuming = True
 				else:
-					self.contr.turn_to_angle(0)
-					while self.contr.turning:
-						self.rate.sleep()
+					if not self.no_vacuum:
+						self.contr.turn_to_angle(0)
+						while self.contr.turning:
+							self.rate.sleep()
 
-					self.contr.read_vacuum = True
-					self.contr.vacuuming = True
+						self.contr.read_vacuum = True
+						self.contr.vacuuming = True
 
 					goal_index += 1
 					if goal_index < len(total_path_it):

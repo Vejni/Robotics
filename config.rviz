@@ -25,7 +25,7 @@ Panels:
     Experimental: false
     Name: Time
     SyncMode: 0
-    SyncSource: LaserScan
+    SyncSource: ""
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -331,5 +331,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: -8
-  Y: -160
+  X: 0
+  Y: 0

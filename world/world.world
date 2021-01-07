@@ -58,7 +58,7 @@ define erratic position
   cam(pose [ 0.05 0.0 0.0 0.0 ])
   cam(pose [ 0.05 0.0 0.1 0.0 ])
   localization "odom"
-  localization_origin [ 0 0 0 0 ] #REMOVE FOR ROBOT TO NOT KNOW WHERE IT STARTS
+  localization_origin [ 0 0 0 0 ]
   odom_error [ 0.001 0.001 0.001 0.001 0.001 0.001 ]
 )
 

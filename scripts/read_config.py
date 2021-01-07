@@ -16,5 +16,5 @@ def read_config():
 			for param in stream.keys():
 				rospy.set_param(param, stream[param])
 	except Exception as e:
-		print("Error reading config: ", e)
+		pass
 
